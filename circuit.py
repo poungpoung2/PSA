@@ -11,7 +11,6 @@ POLL_INTERVAL = 0.02
 
 # Create variable to store button and LED states
 isPressed = False
-isOn = False
 isWhite = False
 
 # Function to turn on LEDs
@@ -55,7 +54,6 @@ while True:
     if cur_state == "OFF_NotPressed":
         # If the button is pressed
         if isPressed:  
-            isOn = True
             cur_state = "ON_Pressed"
             turnOn()
 
@@ -69,7 +67,6 @@ while True:
     elif cur_state == "ON_NotPressed":
         # If the button is pressed again
         if isPressed:  
-            isOn = False
             cur_state = "OFF_Pressed"
             turnOff()
 
