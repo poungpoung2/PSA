@@ -53,7 +53,8 @@ while True:
 
     # If the current state is OFF_NotPressed
     if cur_state == "OFF_NotPressed":
-        if isPressed:  # If the button is pressed
+        # If the button is pressed
+        if isPressed:  
             isOn = True
             cur_state = "ON_Pressed"
             turnOn()
