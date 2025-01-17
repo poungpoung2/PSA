@@ -12,39 +12,46 @@ POLL_INTERVAL = 0.02
 # Create variable to store button and LED State
 isPressed = False
 isOn = False
+isWhite = False
 
 # Function to turn on LEDs
 def turnOn():
+    if isWhite:
+        g_led.value = True
+
     r_led.value = True
-    w_led.value = True
     b_led.value = True
 
 # Function to turn off LEDs
 def turnOff():
     r_led.value = False
-    w_led.value = False
+    g_led.value = False
     b_led.value = False
 
 # Configure the GPIO pin connected to the LED as a digital output
 r_led = digitalio.DigitalInOut()
-w_led = digitalio.DigitalInOut()
+g_led = digitalio.DigitalInOut()
 b_led = digitalio.DigitalInOut()
 
 r_led.direction = digitalio.Direction.OUTPUT
-w_led.direction = digitalio.Direction.OUTPUT
+g_led.direction = digitalio.Direction.OUTPUT
 b_led.direction = digitalio.Direction.OUTPUT
 
 # Configure the GPIO pin connected to the button as a digital input
-button = digitalio . DigitalInOut (board.GP15)
-button . direction = digitalio . Direction .INPUT
-button .pull = digitalio .Pull.UP
+onoff_button = digitalio.DigitalInOut ()
+onoff_button.direction = digitalio.Direction.INPUT
+onoff_button.pull = digitalio.Pull.UP
 
+white_button = digitalio.DigitalInOut ()
+white_button.direction = digitalio.Direction.INPUT
+white_button.pull = digitalio.Pull.UP
 
 # Start Looping for polling
 while True:
     # Update the button status
-    isPressed = button.value
-
+    isPressed = onoff_button.value
+    isWhite = white_button.value
+    
     # If the current state off not pressed
     if cur_state == "OFF_NotPressed":
         # if the button is pressed
