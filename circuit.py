@@ -2,23 +2,22 @@ import board
 import digitalio
 import time
 
-# Define States
-states = ["OFF", "ON"]
-cur_state = "OFF"
+# Define States - these are all possible states of the system
+states = ["OFF_Pressed", "OFF_NotPressed", "ON_NotPressed", "ON_Pressed"]
+cur_state = "OFF_NotPressed"  # Initial state
 
-# Define Polling Interval
+# Define Polling Interval - how often to check button states
 POLL_INTERVAL = 0.02
 
-# Track button state for edge detection
-prev_button_state = False
-prev_color = False
-
 # Create variable to store button and LED states
-isWhite = False
+isPressed = False  # On/Off button state
+isWhite = False  # Color state
+prev_white = False  # Previous color button state for edge detection
 
-# Function to turn on LEDs
+
+# Function to turn on LEDs - used when transitioning to ON state
 def turnOn():
-    if isWhite:
+    if prev_white:  # If in white mode
         g_led_1.value = True
         g_led_2.value = True
         g_led_3.value = True
@@ -32,7 +31,7 @@ def turnOn():
     b_led_3.value = True
 
 
-# Function to turn off LEDs
+# Function to turn off LEDs - used when transitioning to OFF state
 def turnOff():
     r_led_1.value = False
     r_led_2.value = False
@@ -46,8 +45,11 @@ def turnOff():
     b_led_2.value = False
     b_led_3.value = False
 
-# Function to toggle between white and purple
+
+# Function to toggle between white and purple colors
 def toggle_color():
+    global isWhite
+    isWhite = not isWhite  # Toggle the color state
     g_led_1.value = isWhite
     g_led_2.value = isWhite
     g_led_3.value = isWhite
@@ -75,37 +77,53 @@ b_led_2.direction = digitalio.Direction.OUTPUT
 b_led_3 = digitalio.DigitalInOut(board.GP16)
 b_led_3.direction = digitalio.Direction.OUTPUT
 
-# Configure the GPIO pin connected to the button as a digital input with pull-up resistor
-onoff_button = digitalio.DigitalInOut(board.GP13)  # Set actual pin
+# Configure the GPIO pins for buttons as digital inputs with pull-up resistors
+onoff_button = digitalio.DigitalInOut(board.GP13)
 onoff_button.direction = digitalio.Direction.INPUT
 onoff_button.pull = digitalio.Pull.UP
 
-white_button = digitalio.DigitalInOut(board.GP11)  # Set actual pin
+white_button = digitalio.DigitalInOut(board.GP11)
 white_button.direction = digitalio.Direction.INPUT
 white_button.pull = digitalio.Pull.UP
 
-# Start looping for polling
+# Start main polling loop
 while True:
-    # Read button state
+    # Update button states
     isPressed = not onoff_button.value
-    isWhite = not white_button.value
+    white_pressed = not white_button.value
 
-    # Detect button press 
-    if isPressed and not prev_button_state:
-        if cur_state == "OFF":
-            cur_state = "ON"
+    # State machine logic
+    if cur_state == "OFF_NotPressed":
+        # If on/off button is pressed, turn on LEDs and change state
+        if isPressed:
+            cur_state = "ON_Pressed"
             turnOn()
-        elif cur_state == "ON":
-            cur_state = "OFF"
+
+    elif cur_state == "ON_Pressed":
+        # If on/off button is released, change state
+        if not isPressed:
+            cur_state = "ON_NotPressed"
+
+        # Check for color button rising edge
+        if white_pressed and not prev_white:
+            toggle_color()
+
+    elif cur_state == "ON_NotPressed":
+        # If on/off button is pressed, turn off LEDs and change state
+        if isPressed:
+            cur_state = "OFF_Pressed"
             turnOff()
 
-    # Detect color toggle press
-    if prev_color != isWhite:
-        toggle_color()
+        # Check for color button rising edge
+        if white_pressed and not prev_white:
+            toggle_color()
 
-    # Update previous button state
-    prev_button_state = isPressed
-    prev_color = isWhite
+    elif cur_state == "OFF_Pressed":
+        # If on/off button is released, change state
+        if not isPressed:
+            cur_state = "OFF_NotPressed"
 
-    # Sleep for polling interval
+    # Update previous color button state for next iteration
+    prev_white = white_pressed
+    # Wait before next poll
     time.sleep(POLL_INTERVAL)
