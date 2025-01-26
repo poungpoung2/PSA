@@ -3,18 +3,18 @@ import digitalio
 import time
 
 # Define States
-states = ["OFF_Pressed", "OFF_NotPressed", "ON_NotPressed", "ON_Pressed"]
-color_state = ["Purple", "White"]
-cur_state = "OFF_NotPressed"
+states = ["OFF", "ON"]
+cur_state = "OFF"
 
 # Define Polling Interval
 POLL_INTERVAL = 0.02
 
-# Create variable to store button and LED states
-isPressed = False
-isWhite = False
-prev_color = isWhite
+# Track button state for edge detection
+prev_button_state = False
+prev_color = False
 
+# Create variable to store button and LED states
+isWhite = False
 
 # Function to turn on LEDs
 def turnOn():
@@ -46,7 +46,7 @@ def turnOff():
     b_led_2.value = False
     b_led_3.value = False
 
-
+# Function to toggle between white and purple
 def toggle_color():
     g_led_1.value = isWhite
     g_led_2.value = isWhite
@@ -61,14 +61,12 @@ r_led_2.direction = digitalio.Direction.OUTPUT
 r_led_3 = digitalio.DigitalInOut(board.GP27)
 r_led_3.direction = digitalio.Direction.OUTPUT
 
-
 g_led_1 = digitalio.DigitalInOut(board.GP21)
 g_led_1.direction = digitalio.Direction.OUTPUT
 g_led_2 = digitalio.DigitalInOut(board.GP20)
 g_led_2.direction = digitalio.Direction.OUTPUT
 g_led_3 = digitalio.DigitalInOut(board.GP19)
 g_led_3.direction = digitalio.Direction.OUTPUT
-
 
 b_led_1 = digitalio.DigitalInOut(board.GP18)
 b_led_1.direction = digitalio.Direction.OUTPUT
@@ -88,42 +86,26 @@ white_button.pull = digitalio.Pull.UP
 
 # Start looping for polling
 while True:
-    # Update the button status
+    # Read button state
     isPressed = not onoff_button.value
     isWhite = not white_button.value
 
-    # If the current state is OFF_NotPressed
-    if cur_state == "OFF_NotPressed":
-        # If the button is pressed
-        if isPressed:
-            cur_state = "ON_Pressed"
+    # Detect button press 
+    if isPressed and not prev_button_state:
+        if cur_state == "OFF":
+            cur_state = "ON"
             turnOn()
-
-    # If the current state is ON_Pressed
-    elif cur_state == "ON_Pressed":
-        # If the button is released
-        if not isPressed:
-            cur_state = "ON_NotPressed"
-
-        if prev_color != isWhite:
-            toggle_color()
-
-    # If the current state is ON_NotPressed
-    elif cur_state == "ON_NotPressed":
-        # If the button is pressed again
-        if prev_color != isWhite:
-            toggle_color()
-
-        if isPressed:
-            cur_state = "OFF_Pressed"
+        elif cur_state == "ON":
+            cur_state = "OFF"
             turnOff()
 
-    # If the current state is OFF_Pressed
-    elif cur_state == "OFF_Pressed":
-        # If the button is released
-        if not isPressed:
-            cur_state = "OFF_NotPressed"
+    # Detect color toggle press
+    if prev_color != isWhite:
+        toggle_color()
 
+    # Update previous button state
+    prev_button_state = isPressed
     prev_color = isWhite
+
     # Sleep for polling interval
     time.sleep(POLL_INTERVAL)
